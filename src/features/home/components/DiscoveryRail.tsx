@@ -1,0 +1,13 @@
+import { MediaCard } from "@/components/media/MediaCard";
+import type { MediaCardItem } from "@/lib/tmdb/types";
+
+export function DiscoveryRail({ items }: { items: MediaCardItem[] }) {
+  if (!items.length) return null;
+  return (
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
+      {items.slice(0, 8).map((item) => (
+        <MediaCard key={`${item.type}-${item.id}`} item={item} />
+      ))}
+    </div>
+  );
+}
