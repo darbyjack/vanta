@@ -1,6 +1,6 @@
-import { MediaGrid } from "@/components/media/MediaGrid";
-import { isMediaCardItem, toMediaCard } from "@/lib/tmdb/normalize";
-import type { TmdbCombinedCredit } from "@/lib/tmdb/types";
+import { MediaGrid } from '#/components/media/MediaGrid'
+import { isMediaCardItem, toMediaCard } from '#/lib/tmdb/normalize'
+import type { TmdbCombinedCredit } from '#/lib/tmdb/types'
 
 export function KnownForRail({ credits }: { credits: TmdbCombinedCredit[] }) {
   const items = credits
@@ -8,13 +8,14 @@ export function KnownForRail({ credits }: { credits: TmdbCombinedCredit[] }) {
     .sort((a, b) => (b.vote_average ?? 0) - (a.vote_average ?? 0))
     .map((credit) => toMediaCard(credit, credit.media_type))
     .filter(isMediaCardItem)
-    .slice(0, 12);
+    .slice(0, 12)
 
-  if (!items.length) return null;
+  if (!items.length) return null
+
   return (
     <section className="py-8">
       <h2 className="mb-4 text-xl font-semibold">Known For</h2>
       <MediaGrid items={items} />
     </section>
-  );
+  )
 }

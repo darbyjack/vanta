@@ -1,6 +1,12 @@
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react'
 
-export function Section({ title, children }: { title: string; children: ReactNode }) {
+export function Section({
+  title,
+  children,
+}: {
+  title: string
+  children: ReactNode
+}) {
   return (
     <section className="py-8">
       <div className="mb-4 flex items-end justify-between gap-4">
@@ -8,5 +14,5 @@ export function Section({ title, children }: { title: string; children: ReactNod
       </div>
       {children}
     </section>
-  );
+  )
 }
