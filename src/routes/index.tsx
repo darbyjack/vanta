@@ -3,9 +3,13 @@ import { Container } from '#/components/layout/Container'
 import { Section } from '#/components/layout/Section'
 import { DiscoveryRail } from '#/features/home/components/DiscoveryRail'
 import { HomeSearch } from '#/features/home/components/HomeSearch'
+import { guardedPageHandlers } from '#/lib/bots/server-route'
 import { getHomePageData } from '#/lib/tmdb/home.functions'
 
 export const Route = createFileRoute('/')({
+  server: {
+    handlers: guardedPageHandlers(),
+  },
   loader: () => getHomePageData(),
   staleTime: 60 * 60 * 1000,
   head: () => ({

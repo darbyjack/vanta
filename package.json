@@ -10,8 +10,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run --passWithNoTests",
-    "deploy": "pnpm run build && wrangler deploy",
-    "cf:deploy": "pnpm run build && wrangler deploy",
+    "deploy": "pnpm run build && wrangler deploy --old-asset-ttl 604800",
+    "cf:deploy": "pnpm run build && wrangler deploy --old-asset-ttl 604800",
     "cf:preview": "pnpm run build && wrangler dev"
   },
   "dependencies": {

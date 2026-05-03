@@ -12,6 +12,7 @@ import {
   CastSection,
   CrewLine,
 } from '#/features/movie/components/DetailSections'
+import { guardedPageHandlers } from '#/lib/bots/server-route'
 import { getTvSeasonPageData } from '#/lib/tmdb/entity.functions'
 import { tmdbImage } from '#/lib/tmdb/images'
 import { formatDate, formatRuntime, trimText } from '#/lib/tmdb/normalize'
@@ -19,6 +20,9 @@ import type { TmdbEpisode } from '#/lib/tmdb/types'
 import { parseLeadingId } from '#/lib/url/slug'
 
 export const Route = createFileRoute('/tv/$slug/season/$seasonNumber')({
+  server: {
+    handlers: guardedPageHandlers(),
+  },
   loader: async ({ params }) => {
     const id = parseLeadingId(params.slug)
     const seasonNumber = parseNumberParam(params.seasonNumber, 0)

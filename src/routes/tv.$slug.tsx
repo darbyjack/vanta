@@ -19,12 +19,16 @@ import {
   SimilarTv,
   TrailerLink,
 } from '#/features/movie/components/DetailSections'
+import { guardedPageHandlers } from '#/lib/bots/server-route'
 import { getTvPageData } from '#/lib/tmdb/entity.functions'
 import { compactNumber, formatDate, yearFrom } from '#/lib/tmdb/normalize'
 import type { TmdbSeasonSummary } from '#/lib/tmdb/types'
 import { parseLeadingId } from '#/lib/url/slug'
 
 export const Route = createFileRoute('/tv/$slug')({
+  server: {
+    handlers: guardedPageHandlers(),
+  },
   loader: async ({ params }) => {
     const id = parseLeadingId(params.slug)
     if (!id) throw notFound()

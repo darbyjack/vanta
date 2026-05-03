@@ -12,6 +12,7 @@ async function safePage<T>(
   try {
     return (await tmdbFetch<TmdbPage<T>>(path, params))?.results ?? []
   } catch (error) {
+    if (error instanceof TmdbError && error.status === 403) throw error
     if (error instanceof TmdbError && error.message.includes('TMDB_API_KEY')) {
       return []
     }

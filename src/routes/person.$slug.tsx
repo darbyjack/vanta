@@ -4,11 +4,15 @@ import { Container } from '#/components/layout/Container'
 import { ProfileImage } from '#/components/media/ProfileImage'
 import { KnownForRail } from '#/features/person/components/KnownForRail'
 import { PersonFilmography } from '#/features/person/components/PersonFilmography'
+import { guardedPageHandlers } from '#/lib/bots/server-route'
 import { getPersonPageData } from '#/lib/tmdb/entity.functions'
 import { formatDate } from '#/lib/tmdb/normalize'
 import { parseLeadingId } from '#/lib/url/slug'
 
 export const Route = createFileRoute('/person/$slug')({
+  server: {
+    handlers: guardedPageHandlers(),
+  },
   loader: async ({ params }) => {
     const id = parseLeadingId(params.slug)
     if (!id) throw notFound()

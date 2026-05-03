@@ -4,6 +4,7 @@ import {
   CastSection,
   CrewLine,
 } from '#/features/movie/components/DetailSections'
+import { guardedPageHandlers } from '#/lib/bots/server-route'
 import { getTvEpisodePageData } from '#/lib/tmdb/entity.functions'
 import { tmdbImage } from '#/lib/tmdb/images'
 import { formatDate, formatRuntime } from '#/lib/tmdb/normalize'
@@ -12,6 +13,9 @@ import { parseLeadingId } from '#/lib/url/slug'
 export const Route = createFileRoute(
   '/tv/$slug/season/$seasonNumber/episode/$episodeNumber',
 )({
+  server: {
+    handlers: guardedPageHandlers(),
+  },
   loader: async ({ params }) => {
     const id = parseLeadingId(params.slug)
     const seasonNumber = parseNumberParam(params.seasonNumber)

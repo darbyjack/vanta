@@ -135,9 +135,13 @@ The scaffold was created with Cloudflare support:
 
 - `vite.config.ts` includes `@cloudflare/vite-plugin`.
 - `vite.config.ts` skips the Cloudflare plugin when `mode === "test"` because Vitest injects `resolve.external` options that the Cloudflare plugin rejects for Worker environments.
-- `wrangler.jsonc` points `main` at `@tanstack/react-start/server-entry`.
+- `pnpm run build` currently emits Cloudflare deploy output to `dist/server/index.js` and static client assets to `dist/client`.
+- `wrangler.jsonc` uses `main: "@tanstack/react-start/server-entry"` so clean builds work before `dist/server/index.js` exists. The Cloudflare Vite plugin emits `dist/server/wrangler.json`, and Wrangler deploy uses that redirected config with `main: "index.js"` relative to `dist/server` and `assets.directory: "../client"`.
+- `wrangler.jsonc` configures `assets.directory` as `dist/client` with the `ASSETS` binding. Do not deploy without an assets directory because static asset requests can be counted as Worker requests.
 - `wrangler.jsonc` includes `nodejs_compat`, which TanStack deployment guidance calls out as required for Worker runtime compatibility.
-- Deploy scripts use pnpm. `pnpm run deploy` and `pnpm run cf:deploy` run `pnpm run build && wrangler deploy`.
+- Do not set `assets.run_worker_first: true`; leave the default asset behavior so matching files in `dist/client` are served directly instead of invoking the Worker.
+- Worker observability is enabled in `wrangler.jsonc`.
+- Deploy scripts use pnpm. `pnpm run deploy` and `pnpm run cf:deploy` run `pnpm run build && wrangler deploy --old-asset-ttl 604800` so cached HTML can still load the previous hashed CSS/JS assets during deploy rollover.
 
 Set Worker secrets with Wrangler, for example:
 
@@ -180,13 +184,16 @@ npx wrangler secret put SITE_URL
 - Canonical slug mismatches use TanStack Router `redirect()` from loaders. Invalid or missing TMDB entities use `notFound()` and route-level not-found UI.
 - The legacy Radix trailer modal was not copied. Entity pages use a click-through YouTube no-cookie trailer link to avoid adding client modal JavaScript during this server-first migration.
 - `robots.txt` and `sitemap.xml` are implemented as TanStack Start server routes. The sitemap matches the legacy behavior and currently lists only `/`.
+- `robots.txt` blocks common AI crawlers, including Anthropic, OpenAI, Perplexity, Google-Extended, CCBot, Bytespider, and Applebot-Extended agents. Normal search engines such as Googlebot and Bingbot remain allowed.
+- TMDB fetches check the request `User-Agent` in `src/lib/tmdb/client.server.ts` and return a 403 before TMDB work for blocked AI crawler patterns. To relax bot rules later, edit `src/lib/bots/policy.ts`.
 - TV detail pages render season cards from the `/tv/{id}` response only. They do not fetch every episode or any episode credits.
 - TV season pages fetch season details and season-level credits only. Episode rows link to episode routes and omit per-episode cast.
 - TV episode pages fetch episode details and episode credits lazily for that episode route only.
 - Season and episode routes are nested under `tv.$slug.tsx` in TanStack's generated route tree. The TV detail route must render an `<Outlet>` for child URLs, otherwise `/tv/$slug/season/$seasonNumber` matches but the parent TV detail component swallows the child page.
 - The season route also renders an `<Outlet>` for episode URLs so `/tv/$slug/season/$seasonNumber/episode/$episodeNumber` can render the episode page instead of the season page.
 - Season and episode navigation uses typed TanStack `<Link>` with `to` plus `params`, not interpolated route strings.
-- Entity routes set `preload: false` to avoid intent-hover TMDB detail calls. The router still keeps global intent preloading for lighter routes.
+- Global router preloading is disabled with `defaultPreload: false` to reduce accidental route-loader and Worker request volume. Re-enable preloading later only for routes known to be safe and cheap.
+- Entity routes also set `preload: false` to avoid intent-hover TMDB detail calls.
 - Search uses direct Zod v4 validation and strips default `type=all` and `page=1` search params through TanStack Router search middleware.
 
 ## Cache Policy Table
@@ -196,7 +203,8 @@ npx wrangler secret put SITE_URL
 | HOME | `/` | `public, max-age=300, s-maxage=3600, stale-while-revalidate=7200` |
 | SEARCH | `/search` | `public, max-age=60, s-maxage=600, stale-while-revalidate=1800` |
 | ENTITY | movie, TV, person, season, episode | `public, max-age=300, s-maxage=86400, stale-while-revalidate=604800` |
-| STATIC | robots, sitemap | `public, max-age=3600, s-maxage=86400` |
+| STATIC | sitemap | `public, max-age=3600, s-maxage=86400` |
+| ROBOTS | robots | `public, max-age=300, s-maxage=3600` |
 
 `CDN-Cache-Control` is emitted alongside `Cache-Control` for Cloudflare. Non-production responses include `x-vanta-cache-policy` and `x-vanta-route-kind`; production responses omit those debug headers. Do not set cookies from public reference routes.
 
@@ -208,6 +216,12 @@ npx wrangler secret put SITE_URL
 - Season navigation bug validation passed locally: clicking Season 1 from `/tv/1399-game-of-thrones` changes the URL to `/tv/1399-game-of-thrones/season/1` and renders the Season 1 page with an episode list; clicking episode 1 renders `Winter Is Coming` with episode credits.
 - Root cause: nested TanStack route files were correct, but parent route components did not render child outlets. A non-nested underscore route attempt can make SSR appear correct while causing hydrated client mismatch in this app, so the stable fix is nested route files plus explicit child outlets.
 - Header validation after deploy should check `Cache-Control`, `CDN-Cache-Control`, no `Set-Cookie`, and Cloudflare `CF-Cache-Status`.
+- Worker request-volume root cause: the source Wrangler config pointed directly at `@tanstack/react-start/server-entry` and did not declare static assets, while the build output expected a built Worker at `dist/server/index.js` plus direct asset serving from `dist/client`. This could route asset traffic through the Worker and inflate request counts.
+- Request-volume mitigation validation should include `pnpm run build`, `pnpm wrangler deploy`, `curl -I https://vanta.glare.workers.dev/`, `curl -I https://vanta.glare.workers.dev/favicon.ico`, and `pnpm wrangler tail` while loading the site once to confirm static asset requests are not logged as Worker invocations.
+- Request-volume mitigation validation on 2026-05-03: `pnpm run build` passed, `pnpm wrangler deploy` uploaded `dist/client` assets and deployed Worker version `b81d0b8d-11a0-4e8f-865f-c71e6da817c2`, app route headers had `Cache-Control` and `CDN-Cache-Control` with no `Set-Cookie`, static asset headers returned `CF-Cache-Status`, and filtered `wrangler tail` output showed only app-route requests for `vanta.glare.workers.dev` with no `/assets/...` or `/favicon.ico` Worker events.
+- CSS outage root cause: deployed HTML referenced an older hashed stylesheet while Workers Assets only had the newer hashed CSS. Keep old assets during deployment with `--old-asset-ttl 604800`, and verify deployed HTML, CSS, and JS filenames together after each deploy.
+- Bot control validation should include `curl https://vanta.glare.dev/robots.txt`, `curl -I -A "ClaudeBot" https://vanta.glare.dev/`, `curl -I -A "Mozilla/5.0" https://vanta.glare.dev/`, and `pnpm wrangler tail --format json` to inspect live request user agents and `asOrganization`.
+- CSS/bot validation on 2026-05-03: `pnpm run build`, `pnpm run test`, and `pnpm wrangler deploy --old-asset-ttl 604800` passed; deployed Worker version `20fed608-a752-4dfa-a383-88a00b8f4967`; deployed HTML references `/assets/styles-BI9_2CSx.css` and `/assets/index-Cfl1jyv3.js`; those CSS/JS assets return `200` from Cloudflare static assets; `curl -I -A "ClaudeBot" https://vanta.glare.dev/` returns `403`; `curl -I -A "Mozilla/5.0" https://vanta.glare.dev/` returns `200`; `curl -I https://vanta.glare.dev/robots.txt` returns `text/plain` with `Cache-Control: public, max-age=300, s-maxage=3600`; filtered `wrangler tail` saw the app route for `vanta.glare.workers.dev` and no `/assets/...` or `/favicon.ico` Worker events.
 
 ## Next Steps
 

@@ -1,7 +1,24 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "tanstack-start-app",
-  "compatibility_date": "2025-09-02",
-  "compatibility_flags": ["nodejs_compat"],
-  "main": "@tanstack/react-start/server-entry"
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "vanta",
+	"compatibility_date": "2026-05-03",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"main": "@tanstack/react-start/server-entry",
+	"assets": {
+		"directory": "dist/client",
+		"binding": "ASSETS"
+	},
+	"routes": [
+		{
+			"pattern": "vanta.glare.dev",
+			"zone_name": "glare.dev",
+			"custom_domain": true,
+			"enabled": true,
+			"previews_enabled": false
+		}
+	],
+	"workers_dev": true,
+	"preview_urls": true
 }

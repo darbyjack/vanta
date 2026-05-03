@@ -1,3 +1,8 @@
+import {
+  getRequestHeader,
+  setResponseStatus,
+} from '@tanstack/react-start/server'
+import { isBlockedWorkerBot } from '#/lib/bots/policy'
 import { getEnv, hasTmdbKey } from '#/lib/tmdb/env.server'
 
 const BASE_URL = 'https://api.themoviedb.org/3'
@@ -15,6 +20,11 @@ export async function tmdbFetch<T>(
   path: string,
   params: Record<string, string | number | boolean | undefined> = {},
 ) {
+  if (isBlockedWorkerBot(getRequestHeader('user-agent') ?? null)) {
+    setResponseStatus(403)
+    throw new TmdbError('Blocked crawler.', 403)
+  }
+
   if (!hasTmdbKey()) {
     throw new TmdbError('TMDB_API_KEY is not configured.')
   }

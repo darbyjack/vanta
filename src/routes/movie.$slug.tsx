@@ -12,11 +12,15 @@ import {
   SimilarMovies,
   TrailerLink,
 } from '#/features/movie/components/DetailSections'
+import { guardedPageHandlers } from '#/lib/bots/server-route'
 import { getMoviePageData } from '#/lib/tmdb/entity.functions'
 import { compactNumber, formatRuntime, yearFrom } from '#/lib/tmdb/normalize'
 import { parseLeadingId } from '#/lib/url/slug'
 
 export const Route = createFileRoute('/movie/$slug')({
+  server: {
+    handlers: guardedPageHandlers(),
+  },
   loader: async ({ params }) => {
     const id = parseLeadingId(params.slug)
     if (!id) throw notFound()

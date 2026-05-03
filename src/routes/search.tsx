@@ -5,10 +5,14 @@ import { EmptySearchState } from '#/features/search/components/EmptySearchState'
 import { SearchForm } from '#/features/search/components/SearchForm'
 import { SearchPagination } from '#/features/search/components/SearchPagination'
 import { SearchTypeTabs } from '#/features/search/components/SearchTypeTabs'
+import { guardedPageHandlers } from '#/lib/bots/server-route'
 import { getSearchPageData } from '#/lib/tmdb/search.functions'
 import { searchParamsSchema } from '#/lib/tmdb/search'
 
 export const Route = createFileRoute('/search')({
+  server: {
+    handlers: guardedPageHandlers(),
+  },
   validateSearch: searchParamsSchema,
   search: {
     middlewares: [stripSearchParams({ q: '', type: 'all', page: 1 })],
