@@ -16,6 +16,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as TvSlugRouteImport } from './routes/tv.$slug'
 import { Route as PersonSlugRouteImport } from './routes/person.$slug'
 import { Route as MovieSlugRouteImport } from './routes/movie.$slug'
+import { Route as TvSlugSeasonSeasonNumberRouteImport } from './routes/tv.$slug.season.$seasonNumber'
+import { Route as TvSlugSeasonSeasonNumberEpisodeEpisodeNumberRouteImport } from './routes/tv.$slug.season.$seasonNumber.episode.$episodeNumber'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -52,6 +54,18 @@ const MovieSlugRoute = MovieSlugRouteImport.update({
   path: '/movie/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TvSlugSeasonSeasonNumberRoute =
+  TvSlugSeasonSeasonNumberRouteImport.update({
+    id: '/season/$seasonNumber',
+    path: '/season/$seasonNumber',
+    getParentRoute: () => TvSlugRoute,
+  } as any)
+const TvSlugSeasonSeasonNumberEpisodeEpisodeNumberRoute =
+  TvSlugSeasonSeasonNumberEpisodeEpisodeNumberRouteImport.update({
+    id: '/episode/$episodeNumber',
+    path: '/episode/$episodeNumber',
+    getParentRoute: () => TvSlugSeasonSeasonNumberRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -60,7 +74,9 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/movie/$slug': typeof MovieSlugRoute
   '/person/$slug': typeof PersonSlugRoute
-  '/tv/$slug': typeof TvSlugRoute
+  '/tv/$slug': typeof TvSlugRouteWithChildren
+  '/tv/$slug/season/$seasonNumber': typeof TvSlugSeasonSeasonNumberRouteWithChildren
+  '/tv/$slug/season/$seasonNumber/episode/$episodeNumber': typeof TvSlugSeasonSeasonNumberEpisodeEpisodeNumberRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -69,7 +85,9 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/movie/$slug': typeof MovieSlugRoute
   '/person/$slug': typeof PersonSlugRoute
-  '/tv/$slug': typeof TvSlugRoute
+  '/tv/$slug': typeof TvSlugRouteWithChildren
+  '/tv/$slug/season/$seasonNumber': typeof TvSlugSeasonSeasonNumberRouteWithChildren
+  '/tv/$slug/season/$seasonNumber/episode/$episodeNumber': typeof TvSlugSeasonSeasonNumberEpisodeEpisodeNumberRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -79,7 +97,9 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/movie/$slug': typeof MovieSlugRoute
   '/person/$slug': typeof PersonSlugRoute
-  '/tv/$slug': typeof TvSlugRoute
+  '/tv/$slug': typeof TvSlugRouteWithChildren
+  '/tv/$slug/season/$seasonNumber': typeof TvSlugSeasonSeasonNumberRouteWithChildren
+  '/tv/$slug/season/$seasonNumber/episode/$episodeNumber': typeof TvSlugSeasonSeasonNumberEpisodeEpisodeNumberRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +111,8 @@ export interface FileRouteTypes {
     | '/movie/$slug'
     | '/person/$slug'
     | '/tv/$slug'
+    | '/tv/$slug/season/$seasonNumber'
+    | '/tv/$slug/season/$seasonNumber/episode/$episodeNumber'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +122,8 @@ export interface FileRouteTypes {
     | '/movie/$slug'
     | '/person/$slug'
     | '/tv/$slug'
+    | '/tv/$slug/season/$seasonNumber'
+    | '/tv/$slug/season/$seasonNumber/episode/$episodeNumber'
   id:
     | '__root__'
     | '/'
@@ -109,6 +133,8 @@ export interface FileRouteTypes {
     | '/movie/$slug'
     | '/person/$slug'
     | '/tv/$slug'
+    | '/tv/$slug/season/$seasonNumber'
+    | '/tv/$slug/season/$seasonNumber/episode/$episodeNumber'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -118,7 +144,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   MovieSlugRoute: typeof MovieSlugRoute
   PersonSlugRoute: typeof PersonSlugRoute
-  TvSlugRoute: typeof TvSlugRoute
+  TvSlugRoute: typeof TvSlugRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -172,8 +198,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MovieSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tv/$slug/season/$seasonNumber': {
+      id: '/tv/$slug/season/$seasonNumber'
+      path: '/season/$seasonNumber'
+      fullPath: '/tv/$slug/season/$seasonNumber'
+      preLoaderRoute: typeof TvSlugSeasonSeasonNumberRouteImport
+      parentRoute: typeof TvSlugRoute
+    }
+    '/tv/$slug/season/$seasonNumber/episode/$episodeNumber': {
+      id: '/tv/$slug/season/$seasonNumber/episode/$episodeNumber'
+      path: '/episode/$episodeNumber'
+      fullPath: '/tv/$slug/season/$seasonNumber/episode/$episodeNumber'
+      preLoaderRoute: typeof TvSlugSeasonSeasonNumberEpisodeEpisodeNumberRouteImport
+      parentRoute: typeof TvSlugSeasonSeasonNumberRoute
+    }
   }
 }
+
+interface TvSlugSeasonSeasonNumberRouteChildren {
+  TvSlugSeasonSeasonNumberEpisodeEpisodeNumberRoute: typeof TvSlugSeasonSeasonNumberEpisodeEpisodeNumberRoute
+}
+
+const TvSlugSeasonSeasonNumberRouteChildren: TvSlugSeasonSeasonNumberRouteChildren =
+  {
+    TvSlugSeasonSeasonNumberEpisodeEpisodeNumberRoute:
+      TvSlugSeasonSeasonNumberEpisodeEpisodeNumberRoute,
+  }
+
+const TvSlugSeasonSeasonNumberRouteWithChildren =
+  TvSlugSeasonSeasonNumberRoute._addFileChildren(
+    TvSlugSeasonSeasonNumberRouteChildren,
+  )
+
+interface TvSlugRouteChildren {
+  TvSlugSeasonSeasonNumberRoute: typeof TvSlugSeasonSeasonNumberRouteWithChildren
+}
+
+const TvSlugRouteChildren: TvSlugRouteChildren = {
+  TvSlugSeasonSeasonNumberRoute: TvSlugSeasonSeasonNumberRouteWithChildren,
+}
+
+const TvSlugRouteWithChildren =
+  TvSlugRoute._addFileChildren(TvSlugRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -182,7 +248,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   MovieSlugRoute: MovieSlugRoute,
   PersonSlugRoute: PersonSlugRoute,
-  TvSlugRoute: TvSlugRoute,
+  TvSlugRoute: TvSlugRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

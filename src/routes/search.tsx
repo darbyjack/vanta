@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, stripSearchParams } from '@tanstack/react-router'
 import { Container } from '#/components/layout/Container'
 import { MediaGrid } from '#/components/media/MediaGrid'
 import { EmptySearchState } from '#/features/search/components/EmptySearchState'
@@ -9,7 +9,10 @@ import { getSearchPageData } from '#/lib/tmdb/search.functions'
 import { searchParamsSchema } from '#/lib/tmdb/search'
 
 export const Route = createFileRoute('/search')({
-  validateSearch: (search) => searchParamsSchema.parse(search),
+  validateSearch: searchParamsSchema,
+  search: {
+    middlewares: [stripSearchParams({ q: '', type: 'all', page: 1 })],
+  },
   loaderDeps: ({ search: { q, type, page } }) => ({ q, type, page }),
   loader: ({ deps }) => getSearchPageData({ data: deps }),
   staleTime: 5 * 60 * 1000,

@@ -10,7 +10,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run --passWithNoTests",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "pnpm run build && wrangler deploy",
+    "cf:deploy": "pnpm run build && wrangler deploy",
+    "cf:preview": "pnpm run build && wrangler dev"
   },
   "dependencies": {
     "@cloudflare/vite-plugin": "^1.26.0",

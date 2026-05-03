@@ -137,7 +137,7 @@ The scaffold was created with Cloudflare support:
 - `vite.config.ts` skips the Cloudflare plugin when `mode === "test"` because Vitest injects `resolve.external` options that the Cloudflare plugin rejects for Worker environments.
 - `wrangler.jsonc` points `main` at `@tanstack/react-start/server-entry`.
 - `wrangler.jsonc` includes `nodejs_compat`, which TanStack deployment guidance calls out as required for Worker runtime compatibility.
-- Deploy script is `npm run deploy`, which runs `npm run build && wrangler deploy`.
+- Deploy scripts use pnpm. `pnpm run deploy` and `pnpm run cf:deploy` run `pnpm run build && wrangler deploy`.
 
 Set Worker secrets with Wrangler, for example:
 
@@ -155,10 +155,13 @@ npx wrangler secret put SITE_URL
 - Keep components near their feature area as migration proceeds.
 - Do not add auth, a database, analytics, or new third-party integrations.
 - Keep generated scaffold structure unless a route migration requires a focused change.
+- Use centralized cache policies from `src/lib/cache/policies.ts` and TanStack Start response header helpers for route-loader/server-function responses.
+- Use HTTP/CDN response headers as the current Cloudflare cache layer.
+- Do not add an internal TMDB cache, Cloudflare Cache API calls, KV, Redis, D1, Neon, Drizzle, Sentry, auth, analytics, or user-owned data.
 
 ## Known Issues
 
-- Homepage, search, entity detail routes, sitemap, and robots migrations are complete.
+- Homepage, search, entity detail routes, TV season and episode routes, sitemap, and robots migrations are complete.
 - `legacy-source` is intentionally outside this app directory and should remain read-only.
 - Local `rg.exe` returned access denied in this environment; use PowerShell `Get-ChildItem` and `Select-String` if needed.
 - The test script uses `--passWithNoTests` until the first migration tests are added.
@@ -177,10 +180,33 @@ npx wrangler secret put SITE_URL
 - Canonical slug mismatches use TanStack Router `redirect()` from loaders. Invalid or missing TMDB entities use `notFound()` and route-level not-found UI.
 - The legacy Radix trailer modal was not copied. Entity pages use a click-through YouTube no-cookie trailer link to avoid adding client modal JavaScript during this server-first migration.
 - `robots.txt` and `sitemap.xml` are implemented as TanStack Start server routes. The sitemap matches the legacy behavior and currently lists only `/`.
+- TV detail pages render season cards from the `/tv/{id}` response only. They do not fetch every episode or any episode credits.
+- TV season pages fetch season details and season-level credits only. Episode rows link to episode routes and omit per-episode cast.
+- TV episode pages fetch episode details and episode credits lazily for that episode route only.
+- Entity routes set `preload: false` to avoid intent-hover TMDB detail calls. The router still keeps global intent preloading for lighter routes.
+- Search uses direct Zod v4 validation and strips default `type=all` and `page=1` search params through TanStack Router search middleware.
+
+## Cache Policy Table
+
+| Policy | Routes | Cache-Control |
+| --- | --- | --- |
+| HOME | `/` | `public, max-age=300, s-maxage=3600, stale-while-revalidate=7200` |
+| SEARCH | `/search` | `public, max-age=60, s-maxage=600, stale-while-revalidate=1800` |
+| ENTITY | movie, TV, person, season, episode | `public, max-age=300, s-maxage=86400, stale-while-revalidate=604800` |
+| STATIC | robots, sitemap | `public, max-age=3600, s-maxage=86400` |
+
+`CDN-Cache-Control` is emitted alongside `Cache-Control` for Cloudflare. Non-production responses include `x-vanta-cache-policy` and `x-vanta-route-kind`; production responses omit those debug headers. Do not set cookies from public reference routes.
+
+## Feature Pass Validation
+
+- `pnpm run build` passes.
+- `pnpm run test` passes, with no test files currently present because the script uses `--passWithNoTests`.
+- Live TMDB validation passed locally with `TMDB_API_KEY` for `/`, `/search`, `/search?q=batman`, `/movie/550-fight-club`, `/tv/1399-game-of-thrones`, `/tv/1399-game-of-thrones/season/1`, `/tv/1399-game-of-thrones/season/1/episode/1`, `/person/287-brad-pitt`, `/robots.txt`, and `/sitemap.xml`.
+- Header validation after deploy should check `Cache-Control`, `CDN-Cache-Control`, no `Set-Cookie`, and Cloudflare `CF-Cache-Status`.
 
 ## Next Steps
 
-1. Add focused tests around slug helpers, TMDB normalization, search-param parsing, and canonical redirect decisions.
-2. Verify live TMDB rendering with `TMDB_API_KEY` set for `/movie/550-fight-club`, `/tv/1399-game-of-thrones`, and `/person/287-brad-pitt`.
-3. Revisit Cloudflare caching headers for entity/server routes once production freshness requirements are finalized.
+1. Add focused tests around slug helpers, TMDB normalization, search-param parsing, canonical redirects, and season/episode param validation.
+2. Verify live TMDB rendering with `TMDB_API_KEY` set for `/movie/550-fight-club`, `/tv/1399-game-of-thrones`, `/tv/1399-game-of-thrones/season/1`, `/tv/1399-game-of-thrones/season/1/episode/1`, and `/person/287-brad-pitt`.
+3. Revisit Cloudflare caching freshness after production traffic patterns are known.
 4. Expand `sitemap.xml` only if there is a stable source of canonical entity URLs to list.

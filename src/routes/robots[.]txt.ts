@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { cacheHeaders } from '#/lib/cache/policies'
 import { absoluteUrl } from '#/lib/seo/metadata'
 
 export const Route = createFileRoute('/robots.txt')({
@@ -20,6 +21,7 @@ export const Route = createFileRoute('/robots.txt')({
           {
             headers: {
               'Content-Type': 'text/plain; charset=utf-8',
+              ...cacheHeaders('STATIC', 'robots'),
             },
           },
         ),

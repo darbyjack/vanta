@@ -22,6 +22,36 @@ export interface TmdbCredit {
   department?: string
 }
 
+export interface TmdbSeasonSummary {
+  id: number
+  name: string
+  overview?: string
+  poster_path: string | null
+  air_date: string | null
+  episode_count: number
+  season_number: number
+}
+
+export interface TmdbEpisode {
+  id: number
+  name: string
+  overview: string
+  air_date: string | null
+  episode_number: number
+  season_number: number
+  still_path: string | null
+  runtime: number | null
+  vote_average?: number
+  vote_count?: number
+  crew?: TmdbCredit[]
+  guest_stars?: TmdbCredit[]
+}
+
+export interface TmdbSeasonDetail extends TmdbSeasonSummary {
+  episodes: TmdbEpisode[]
+  credits?: { cast: TmdbCredit[]; crew: TmdbCredit[] }
+}
+
 export interface TmdbVideo {
   id: string
   key: string
@@ -102,6 +132,7 @@ export interface TmdbTvDetail extends TmdbTvSummary {
   number_of_episodes: number
   number_of_seasons: number
   status: string
+  seasons: TmdbSeasonSummary[]
   last_air_date: string | null
   next_episode_to_air?: { air_date?: string | null } | null
   credits?: { cast: TmdbCredit[]; crew: TmdbCredit[] }

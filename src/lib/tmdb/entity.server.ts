@@ -2,8 +2,11 @@ import { movieJsonLd, personJsonLd, tvJsonLd } from '#/lib/seo/jsonld'
 import { entitySeo } from '#/lib/seo/metadata'
 import { tmdbFetch, TmdbError } from '#/lib/tmdb/client.server'
 import type {
+  TmdbCredit,
+  TmdbEpisode,
   TmdbMovieDetail,
   TmdbPersonDetail,
+  TmdbSeasonDetail,
   TmdbTvDetail,
 } from '#/lib/tmdb/types'
 import { idSlug } from '#/lib/url/slug'
@@ -64,6 +67,70 @@ export async function getTvEntity(id: number) {
     canonicalSlug,
     seo,
     jsonLd: tvJsonLd(tv, seo.url),
+  }
+}
+
+export async function getTvSeasonEntity(id: number, seasonNumber: number) {
+  const [tv, season] = await Promise.all([
+    safeDetail<TmdbTvDetail>(`/tv/${id}`),
+    safeDetail<TmdbSeasonDetail>(`/tv/${id}/season/${seasonNumber}`, {
+      append_to_response: 'credits',
+    }),
+  ])
+  if (!tv || !season) return null
+
+  const canonicalSlug = idSlug(tv.id, tv.name)
+  const path = `/tv/${canonicalSlug}/season/${season.season_number}`
+  const title = `${tv.name}: ${season.name}`
+  const seo = entitySeo({
+    title,
+    description: season.overview || tv.overview,
+    path,
+    imagePath: season.poster_path ?? tv.backdrop_path ?? tv.poster_path,
+  })
+
+  return {
+    tv,
+    season,
+    canonicalSlug,
+    seo,
+  }
+}
+
+export async function getTvEpisodeEntity(
+  id: number,
+  seasonNumber: number,
+  episodeNumber: number,
+) {
+  const [tv, season, episode, credits] = await Promise.all([
+    safeDetail<TmdbTvDetail>(`/tv/${id}`),
+    safeDetail<TmdbSeasonDetail>(`/tv/${id}/season/${seasonNumber}`),
+    safeDetail<TmdbEpisode>(
+      `/tv/${id}/season/${seasonNumber}/episode/${episodeNumber}`,
+    ),
+    safeDetail<{ cast: TmdbCredit[]; crew: TmdbCredit[] }>(
+      `/tv/${id}/season/${seasonNumber}/episode/${episodeNumber}/credits`,
+    ),
+  ])
+  if (!tv || !season || !episode) return null
+
+  const canonicalSlug = idSlug(tv.id, tv.name)
+  const path = `/tv/${canonicalSlug}/season/${season.season_number}/episode/${episode.episode_number}`
+  const title = `${tv.name}: ${episode.name}`
+  const seo = entitySeo({
+    title,
+    description: episode.overview || season.overview || tv.overview,
+    path,
+    imagePath: episode.still_path ?? tv.backdrop_path ?? season.poster_path,
+  })
+
+  return {
+    tv,
+    season,
+    episode,
+    credits,
+    canonicalSlug,
+    seo,
   }
 }
 

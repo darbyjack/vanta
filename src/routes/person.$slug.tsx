@@ -21,6 +21,7 @@ export const Route = createFileRoute('/person/$slug')({
 
     return data
   },
+  preload: false,
   staleTime: 24 * 60 * 60 * 1000,
   head: ({ loaderData }) => ({
     meta: [

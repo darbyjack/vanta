@@ -14,6 +14,7 @@ import {
 } from '#/features/movie/components/DetailSections'
 import { getTvPageData } from '#/lib/tmdb/entity.functions'
 import { compactNumber, formatDate, yearFrom } from '#/lib/tmdb/normalize'
+import type { TmdbSeasonSummary } from '#/lib/tmdb/types'
 import { parseLeadingId } from '#/lib/url/slug'
 
 export const Route = createFileRoute('/tv/$slug')({
@@ -29,6 +30,7 @@ export const Route = createFileRoute('/tv/$slug')({
 
     return data
   },
+  preload: false,
   staleTime: 24 * 60 * 60 * 1000,
   head: ({ loaderData }) => ({
     meta: [
@@ -50,6 +52,7 @@ export const Route = createFileRoute('/tv/$slug')({
 
 function TvPage() {
   const { tv } = Route.useLoaderData()
+  const { slug } = Route.useParams()
   const trailer = pickTrailer(tv.videos)
 
   return (
@@ -91,11 +94,86 @@ function TvPage() {
         </Container>
       </div>
       <Container>
+        <SeasonsSection seasons={tv.seasons ?? []} slug={slug} />
         <CastSection cast={tv.credits?.cast ?? []} />
         <ProvidersSection providers={tv['watch/providers']?.results?.US} />
         <SimilarTv tv={tv} />
       </Container>
     </main>
+  )
+}
+
+function SeasonsSection({
+  seasons,
+  slug,
+}: {
+  seasons: TmdbSeasonSummary[]
+  slug: string
+}) {
+  const regular = seasons
+    .filter((season) => season.season_number > 0)
+    .sort((a, b) => a.season_number - b.season_number)
+  const specials = seasons.filter((season) => season.season_number === 0)
+
+  if (!regular.length && !specials.length) return null
+
+  return (
+    <section className="py-8">
+      <h2 className="mb-4 text-xl font-semibold">Seasons</h2>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {regular.map((season) => (
+          <SeasonCard key={season.id} season={season} slug={slug} />
+        ))}
+      </div>
+      {specials.length ? (
+        <div className="mt-6">
+          <h3 className="mb-3 text-sm font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            Specials
+          </h3>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {specials.map((season) => (
+              <SeasonCard key={season.id} season={season} slug={slug} />
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  )
+}
+
+function SeasonCard({
+  season,
+  slug,
+}: {
+  season: TmdbSeasonSummary
+  slug: string
+}) {
+  return (
+    <a
+      href={`/tv/${slug}/season/${season.season_number}`}
+      className="grid grid-cols-[78px_1fr] gap-3 rounded-md border border-border bg-card p-2 no-underline hover:border-primary/40"
+    >
+      <PosterImage
+        path={season.poster_path}
+        alt={`${season.name} poster`}
+        size="w342"
+      />
+      <span className="min-w-0 py-1">
+        <span className="block truncate text-sm font-medium text-foreground">
+          {season.name}
+        </span>
+        <span className="mt-1 block text-xs text-muted-foreground">
+          {season.season_number === 0
+            ? 'Specials'
+            : `Season ${season.season_number}`}
+        </span>
+        <span className="mt-2 block text-xs text-muted-foreground">
+          {[yearFrom(season.air_date), `${season.episode_count} episodes`]
+            .filter(Boolean)
+            .join(' · ')}
+        </span>
+      </span>
+    </a>
   )
 }
 

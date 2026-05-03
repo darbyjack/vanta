@@ -1,4 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
+import { applyCachePolicy } from '#/lib/cache/policies'
 import { isMediaCardItem, toMediaCard } from '#/lib/tmdb/normalize'
 import {
   getNewReleases,
@@ -13,6 +14,8 @@ export const getHomePageData = createServerFn({ method: 'GET' }).handler(
       getPopular(),
       getNewReleases(),
     ])
+
+    applyCachePolicy('HOME', 'home')
 
     return {
       trendingItems: [
