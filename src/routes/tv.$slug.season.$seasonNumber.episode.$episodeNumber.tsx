@@ -1,4 +1,4 @@
-import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
+import { createFileRoute, Link, notFound, redirect } from '@tanstack/react-router'
 import { Container } from '#/components/layout/Container'
 import {
   CastSection,
@@ -57,16 +57,21 @@ function EpisodePage() {
     <main>
       <Container className="py-8">
         <div className="mb-6 text-sm text-muted-foreground">
-          <a href={`/tv/${slug}`} className="hover:text-primary">
+          <Link
+            to="/tv/$slug"
+            params={{ slug }}
+            className="hover:text-primary"
+          >
             {tv.name}
-          </a>
+          </Link>
           <span> / </span>
-          <a
-            href={`/tv/${slug}/season/${season.season_number}`}
+          <Link
+            to="/tv/$slug/season/$seasonNumber"
+            params={{ slug, seasonNumber: String(season.season_number) }}
             className="hover:text-primary"
           >
             {season.name}
-          </a>
+          </Link>
         </div>
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="max-w-3xl">

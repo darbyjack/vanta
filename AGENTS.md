@@ -183,6 +183,9 @@ npx wrangler secret put SITE_URL
 - TV detail pages render season cards from the `/tv/{id}` response only. They do not fetch every episode or any episode credits.
 - TV season pages fetch season details and season-level credits only. Episode rows link to episode routes and omit per-episode cast.
 - TV episode pages fetch episode details and episode credits lazily for that episode route only.
+- Season and episode routes are nested under `tv.$slug.tsx` in TanStack's generated route tree. The TV detail route must render an `<Outlet>` for child URLs, otherwise `/tv/$slug/season/$seasonNumber` matches but the parent TV detail component swallows the child page.
+- The season route also renders an `<Outlet>` for episode URLs so `/tv/$slug/season/$seasonNumber/episode/$episodeNumber` can render the episode page instead of the season page.
+- Season and episode navigation uses typed TanStack `<Link>` with `to` plus `params`, not interpolated route strings.
 - Entity routes set `preload: false` to avoid intent-hover TMDB detail calls. The router still keeps global intent preloading for lighter routes.
 - Search uses direct Zod v4 validation and strips default `type=all` and `page=1` search params through TanStack Router search middleware.
 
@@ -202,6 +205,8 @@ npx wrangler secret put SITE_URL
 - `pnpm run build` passes.
 - `pnpm run test` passes, with no test files currently present because the script uses `--passWithNoTests`.
 - Live TMDB validation passed locally with `TMDB_API_KEY` for `/`, `/search`, `/search?q=batman`, `/movie/550-fight-club`, `/tv/1399-game-of-thrones`, `/tv/1399-game-of-thrones/season/1`, `/tv/1399-game-of-thrones/season/1/episode/1`, `/person/287-brad-pitt`, `/robots.txt`, and `/sitemap.xml`.
+- Season navigation bug validation passed locally: clicking Season 1 from `/tv/1399-game-of-thrones` changes the URL to `/tv/1399-game-of-thrones/season/1` and renders the Season 1 page with an episode list; clicking episode 1 renders `Winter Is Coming` with episode credits.
+- Root cause: nested TanStack route files were correct, but parent route components did not render child outlets. A non-nested underscore route attempt can make SSR appear correct while causing hydrated client mismatch in this app, so the stable fix is nested route files plus explicit child outlets.
 - Header validation after deploy should check `Cache-Control`, `CDN-Cache-Control`, no `Set-Cookie`, and Cloudflare `CF-Cache-Status`.
 
 ## Next Steps

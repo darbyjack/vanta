@@ -1,4 +1,11 @@
-import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  notFound,
+  redirect,
+  useRouterState,
+} from '@tanstack/react-router'
 import { Badge } from '#/components/ui/Badge'
 import { BackdropImage } from '#/components/media/BackdropImage'
 import { PosterImage } from '#/components/media/PosterImage'
@@ -53,7 +60,14 @@ export const Route = createFileRoute('/tv/$slug')({
 function TvPage() {
   const { tv } = Route.useLoaderData()
   const { slug } = Route.useParams()
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  })
   const trailer = pickTrailer(tv.videos)
+
+  if (pathname !== `/tv/${slug}`) {
+    return <Outlet />
+  }
 
   return (
     <main>
@@ -149,8 +163,9 @@ function SeasonCard({
   slug: string
 }) {
   return (
-    <a
-      href={`/tv/${slug}/season/${season.season_number}`}
+    <Link
+      to="/tv/$slug/season/$seasonNumber"
+      params={{ slug, seasonNumber: String(season.season_number) }}
       className="grid grid-cols-[78px_1fr] gap-3 rounded-md border border-border bg-card p-2 no-underline hover:border-primary/40"
     >
       <PosterImage
@@ -173,7 +188,7 @@ function SeasonCard({
             .join(' · ')}
         </span>
       </span>
-    </a>
+    </Link>
   )
 }
 

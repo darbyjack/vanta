@@ -1,4 +1,11 @@
-import { createFileRoute, notFound, redirect } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  notFound,
+  redirect,
+  useRouterState,
+} from '@tanstack/react-router'
 import { Container } from '#/components/layout/Container'
 import { PosterImage } from '#/components/media/PosterImage'
 import {
@@ -44,14 +51,25 @@ export const Route = createFileRoute('/tv/$slug/season/$seasonNumber')({
 function SeasonPage() {
   const { tv, season } = Route.useLoaderData()
   const { slug } = Route.useParams()
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  })
+
+  if (pathname !== `/tv/${slug}/season/${season.season_number}`) {
+    return <Outlet />
+  }
 
   return (
     <main>
       <Container className="py-8">
         <div className="mb-6 text-sm text-muted-foreground">
-          <a href={`/tv/${slug}`} className="hover:text-primary">
+          <Link
+            to="/tv/$slug"
+            params={{ slug }}
+            className="hover:text-primary"
+          >
             {tv.name}
-          </a>
+          </Link>
           <span> / {season.name}</span>
         </div>
         <div className="grid gap-8 md:grid-cols-[200px_1fr]">
@@ -125,8 +143,13 @@ function EpisodeRow({
   const still = tmdbImage(episode.still_path, 'w342')
 
   return (
-    <a
-      href={`/tv/${slug}/season/${episode.season_number}/episode/${episode.episode_number}`}
+    <Link
+      to="/tv/$slug/season/$seasonNumber/episode/$episodeNumber"
+      params={{
+        slug,
+        seasonNumber: String(episode.season_number),
+        episodeNumber: String(episode.episode_number),
+      }}
       className="grid gap-3 rounded-md border border-border bg-card p-3 no-underline hover:border-primary/40 sm:grid-cols-[160px_1fr]"
     >
       {still ? (
@@ -158,7 +181,7 @@ function EpisodeRow({
           </span>
         ) : null}
       </span>
-    </a>
+    </Link>
   )
 }
 
