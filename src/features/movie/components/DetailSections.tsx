@@ -61,13 +61,21 @@ export function CrewLine({ label, crew }: { label: string; crew: TmdbCredit[] })
   )
 }
 
-export function CastSection({ cast }: { cast: TmdbCredit[] }) {
-  const topCast = cast.slice(0, 12)
+export function CastSection({
+  cast,
+  title = 'Top Cast',
+  limit = 12,
+}: {
+  cast: TmdbCredit[]
+  title?: string
+  limit?: number
+}) {
+  const topCast = cast.slice(0, limit)
   if (!topCast.length) return null
 
   return (
     <section className="py-8">
-      <h2 className="mb-4 text-xl font-semibold">Top Cast</h2>
+      <h2 className="mb-4 text-xl font-semibold">{title}</h2>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {topCast.map((person) => {
           const image = tmdbImage(person.profile_path, 'w185')

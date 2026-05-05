@@ -2,8 +2,8 @@ import { movieJsonLd, personJsonLd, tvJsonLd } from '#/lib/seo/jsonld'
 import { entitySeo } from '#/lib/seo/metadata'
 import { tmdbFetch, TmdbError } from '#/lib/tmdb/client.server'
 import type {
-  TmdbCredit,
   TmdbEpisode,
+  TmdbEpisodeCredits,
   TmdbMovieDetail,
   TmdbPersonDetail,
   TmdbSeasonDetail,
@@ -108,7 +108,7 @@ export async function getTvEpisodeEntity(
     safeDetail<TmdbEpisode>(
       `/tv/${id}/season/${seasonNumber}/episode/${episodeNumber}`,
     ),
-    safeDetail<{ cast: TmdbCredit[]; crew: TmdbCredit[] }>(
+    safeDetail<TmdbEpisodeCredits>(
       `/tv/${id}/season/${seasonNumber}/episode/${episodeNumber}/credits`,
     ),
   ])

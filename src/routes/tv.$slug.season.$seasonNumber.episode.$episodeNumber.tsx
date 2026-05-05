@@ -8,6 +8,7 @@ import { guardedPageHandlers } from '#/lib/bots/server-route'
 import { getTvEpisodePageData } from '#/lib/tmdb/entity.functions'
 import { tmdbImage } from '#/lib/tmdb/images'
 import { formatDate, formatRuntime } from '#/lib/tmdb/normalize'
+import type { TmdbCredit } from '#/lib/tmdb/types'
 import { parseLeadingId } from '#/lib/url/slug'
 
 export const Route = createFileRoute(
@@ -56,6 +57,9 @@ function EpisodePage() {
   const { tv, season, episode, credits } = Route.useLoaderData()
   const { slug } = Route.useParams()
   const still = tmdbImage(episode.still_path, 'w780')
+  const guestStars = credits?.guest_stars ?? episode.guest_stars ?? []
+  const mainCast = credits?.cast ?? []
+  const crew = keyEpisodeCrew(credits?.crew ?? episode.crew ?? [])
 
   return (
     <main>
@@ -110,12 +114,38 @@ function EpisodePage() {
           ) : null}
         </div>
 
-        <CastSection cast={credits?.cast ?? episode.guest_stars ?? []} />
-        <section className="py-8">
-          <CrewLine label="Crew" crew={credits?.crew ?? episode.crew ?? []} />
-        </section>
+        <CastSection cast={guestStars} title="Guest Stars" limit={24} />
+        <CastSection cast={mainCast} title="Main Cast" limit={12} />
+        <CrewSection crew={crew} />
       </Container>
     </main>
+  )
+}
+
+const keyCrewJobs = new Set([
+  'Director',
+  'Writer',
+  'Screenplay',
+  'Teleplay',
+  'Story',
+  'Creator',
+])
+
+function keyEpisodeCrew(crew: TmdbCredit[]) {
+  const keyCrew = crew.filter(
+    (person) => person.job && keyCrewJobs.has(person.job),
+  )
+  return keyCrew.length ? keyCrew : crew
+}
+
+function CrewSection({ crew }: { crew: TmdbCredit[] }) {
+  if (!crew.length) return null
+
+  return (
+    <section className="py-8">
+      <h2 className="mb-4 text-xl font-semibold">Crew</h2>
+      <CrewLine label="Key crew" crew={crew} />
+    </section>
   )
 }
 

@@ -47,6 +47,12 @@ export interface TmdbEpisode {
   guest_stars?: TmdbCredit[]
 }
 
+export interface TmdbEpisodeCredits {
+  cast: TmdbCredit[]
+  guest_stars: TmdbCredit[]
+  crew: TmdbCredit[]
+}
+
 export interface TmdbSeasonDetail extends TmdbSeasonSummary {
   episodes: TmdbEpisode[]
   credits?: { cast: TmdbCredit[]; crew: TmdbCredit[] }

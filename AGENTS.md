@@ -91,6 +91,8 @@ Do not set cookies from public reference routes. Preserve asset handling so matc
 - Handle missing or invalid TMDB entities with `notFound()`.
 - Keep streaming-provider data server-rendered when it is part of the core page.
 - Avoid fetching large nested TV data eagerly; season and episode pages should fetch details only for the requested route.
+- Episode credits expose `guest_stars` separately from `cast`; keep them separate in normalized types and route UI.
+- Episode pages should prioritize episode-specific guest stars before main cast and crew.
 
 ## Performance Rules
 
