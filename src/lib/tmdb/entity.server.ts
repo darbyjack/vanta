@@ -1,6 +1,10 @@
 import { movieJsonLd, personJsonLd, tvJsonLd } from '#/lib/seo/jsonld'
 import { entitySeo } from '#/lib/seo/metadata'
 import { tmdbFetch, TmdbError } from '#/lib/tmdb/client.server'
+import {
+  recommendedMovieCards,
+  recommendedTvCards,
+} from '#/lib/tmdb/recommendations'
 import type {
   TmdbEpisode,
   TmdbEpisodeCredits,
@@ -26,12 +30,11 @@ async function safeDetail<T>(path: string, params: Record<string, string> = {}) 
 
 export async function getMovieEntity(id: number) {
   const movie = await safeDetail<TmdbMovieDetail>(`/movie/${id}`, {
-    append_to_response: 'credits,videos,watch/providers,similar',
+    append_to_response: 'credits,videos,watch/providers,similar,recommendations,images',
   })
   if (!movie) return null
 
-  const canonicalSlug = idSlug(movie.id, movie.title)
-  const path = `/movie/${canonicalSlug}`
+  const { canonicalSlug, path } = entityPath('movie', movie.id, movie.title)
   const seo = entitySeo({
     title: movie.title,
     description: movie.overview,
@@ -41,6 +44,10 @@ export async function getMovieEntity(id: number) {
 
   return {
     movie,
+    recommendations: recommendedMovieCards({
+      similar: movie.similar,
+      recommendations: movie.recommendations,
+    }),
     canonicalSlug,
     seo,
     jsonLd: movieJsonLd(movie, seo.url),
@@ -49,12 +56,11 @@ export async function getMovieEntity(id: number) {
 
 export async function getTvEntity(id: number) {
   const tv = await safeDetail<TmdbTvDetail>(`/tv/${id}`, {
-    append_to_response: 'credits,videos,watch/providers,similar',
+    append_to_response: 'credits,videos,watch/providers,similar,recommendations,images',
   })
   if (!tv) return null
 
-  const canonicalSlug = idSlug(tv.id, tv.name)
-  const path = `/tv/${canonicalSlug}`
+  const { canonicalSlug, path } = entityPath('tv', tv.id, tv.name)
   const seo = entitySeo({
     title: tv.name,
     description: tv.overview,
@@ -64,6 +70,10 @@ export async function getTvEntity(id: number) {
 
   return {
     tv,
+    recommendations: recommendedTvCards({
+      similar: tv.similar,
+      recommendations: tv.recommendations,
+    }),
     canonicalSlug,
     seo,
     jsonLd: tvJsonLd(tv, seo.url),
@@ -107,6 +117,9 @@ export async function getTvEpisodeEntity(
     safeDetail<TmdbSeasonDetail>(`/tv/${id}/season/${seasonNumber}`),
     safeDetail<TmdbEpisode>(
       `/tv/${id}/season/${seasonNumber}/episode/${episodeNumber}`,
+      {
+        append_to_response: 'images',
+      },
     ),
     safeDetail<TmdbEpisodeCredits>(
       `/tv/${id}/season/${seasonNumber}/episode/${episodeNumber}/credits`,
@@ -140,8 +153,7 @@ export async function getPersonEntity(id: number) {
   })
   if (!person) return null
 
-  const canonicalSlug = idSlug(person.id, person.name)
-  const path = `/person/${canonicalSlug}`
+  const { canonicalSlug, path } = entityPath('person', person.id, person.name)
   const seo = entitySeo({
     title: person.name,
     description: person.biography,
@@ -154,5 +166,14 @@ export async function getPersonEntity(id: number) {
     canonicalSlug,
     seo,
     jsonLd: personJsonLd(person, seo.url),
+  }
+}
+
+function entityPath(type: 'movie' | 'tv' | 'person', id: number, title: string) {
+  const canonicalSlug = idSlug(id, title)
+
+  return {
+    canonicalSlug,
+    path: `/${type}/${canonicalSlug}`,
   }
 }

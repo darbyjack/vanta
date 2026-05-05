@@ -3,6 +3,7 @@ import { Container } from '#/components/layout/Container'
 import {
   CastSection,
   CrewLine,
+  GallerySection,
 } from '#/features/movie/components/DetailSections'
 import { guardedPageHandlers } from '#/lib/bots/server-route'
 import { getTvEpisodePageData } from '#/lib/tmdb/entity.functions'
@@ -116,6 +117,7 @@ function EpisodePage() {
 
         <CastSection cast={guestStars} title="Guest Stars" limit={24} />
         <CastSection cast={mainCast} title="Main Cast" limit={12} />
+        <GallerySection images={episode.images} stillPath={episode.still_path} />
         <CrewSection crew={crew} />
       </Container>
     </main>

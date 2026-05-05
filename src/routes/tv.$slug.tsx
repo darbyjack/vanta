@@ -14,9 +14,10 @@ import { Container } from '#/components/layout/Container'
 import {
   CastSection,
   CrewLine,
+  GallerySection,
   pickTrailer,
   ProvidersSection,
-  SimilarTv,
+  RecommendationsSection,
   TrailerLink,
 } from '#/features/movie/components/DetailSections'
 import { guardedPageHandlers } from '#/lib/bots/server-route'
@@ -62,7 +63,7 @@ export const Route = createFileRoute('/tv/$slug')({
 })
 
 function TvPage() {
-  const { tv } = Route.useLoaderData()
+  const { tv, recommendations } = Route.useLoaderData()
   const { slug } = Route.useParams()
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
@@ -115,7 +116,8 @@ function TvPage() {
         <SeasonsSection seasons={tv.seasons ?? []} slug={slug} />
         <CastSection cast={tv.credits?.cast ?? []} />
         <ProvidersSection providers={tv['watch/providers']?.results?.US} />
-        <SimilarTv tv={tv} />
+        <GallerySection images={tv.images} />
+        <RecommendationsSection items={recommendations} />
       </Container>
     </main>
   )

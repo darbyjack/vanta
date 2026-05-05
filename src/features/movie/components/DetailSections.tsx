@@ -1,16 +1,14 @@
-import { Badge } from '#/components/ui/Badge'
 import { MediaGrid } from '#/components/media/MediaGrid'
+import type { MediaCardItem } from '#/lib/tmdb/types'
+import { galleryImages } from '#/lib/tmdb/gallery'
 import { tmdbImage } from '#/lib/tmdb/images'
-import {
-  isMediaCardItem,
-  mediaHref,
-  toMediaCard,
-} from '#/lib/tmdb/normalize'
+import { mediaHref } from '#/lib/tmdb/normalize'
+import { providerAvailabilityGroups } from '#/lib/tmdb/provider-availability'
 import type {
   TmdbCredit,
-  TmdbMovieDetail,
+  TmdbImages,
   TmdbProvider,
-  TmdbTvDetail,
+  TmdbWatchProviders,
 } from '#/lib/tmdb/types'
 
 export function pickTrailer(videos?: {
@@ -117,82 +115,147 @@ export function CastSection({
 export function ProvidersSection({
   providers,
 }: {
-  providers?: {
-    link?: string
-    flatrate?: TmdbProvider[]
-    rent?: TmdbProvider[]
-    buy?: TmdbProvider[]
-  }
+  providers?: NonNullable<TmdbWatchProviders['results']>[string]
 }) {
-  if (!providers || (!providers.flatrate?.length && !providers.rent?.length && !providers.buy?.length)) {
-    return null
-  }
-
-  const groups = [
-    ['Stream', providers.flatrate],
-    ['Rent', providers.rent],
-    ['Buy', providers.buy],
-  ] as const
+  const groups = providerAvailabilityGroups(providers)
+  if (!groups.length) return null
+  const providerLink = providers?.link
 
   return (
     <section className="py-8">
       <h2 className="mb-4 text-xl font-semibold">Where to Watch</h2>
       <div className="space-y-4 rounded-md border border-border bg-card p-4">
-        {groups.map(([label, list]) =>
-          list?.length ? (
-            <div key={label}>
-              <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-                {label}
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {list.slice(0, 8).map((provider) => (
-                  <Badge key={provider.provider_id} variant="secondary" className="rounded">
-                    {provider.provider_name}
-                  </Badge>
-                ))}
-              </div>
+        {groups.map((group) => (
+          <div key={group.key}>
+            <h3 className="mb-2 text-sm font-medium text-muted-foreground">
+              {group.label}
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {group.providers.map((provider) => (
+                <ProviderLogo
+                  key={provider.provider_id}
+                  provider={provider}
+                  href={providerLink}
+                />
+              ))}
             </div>
-          ) : null,
-        )}
-        {providers.link ? (
-          <a href={providers.link} className="inline-block text-sm text-primary underline-offset-4 hover:underline">
-            View availability on TMDB
-          </a>
-        ) : null}
+          </div>
+        ))}
       </div>
     </section>
   )
 }
 
-export function SimilarMovies({ movie }: { movie: TmdbMovieDetail }) {
-  const items =
-    movie.similar?.results
-      .map((item) => toMediaCard(item, 'movie'))
-      .filter(isMediaCardItem)
-      .slice(0, 12) ?? []
+function ProviderLogo({
+  provider,
+  href,
+}: {
+  provider: TmdbProvider
+  href?: string
+}) {
+  const logo = tmdbImage(provider.logo_path, 'w92')
+  const content = (
+    <>
+      {logo ? (
+        <img
+          src={logo}
+          alt=""
+          className="h-8 w-8 rounded object-cover"
+          loading="lazy"
+          decoding="async"
+        />
+      ) : (
+        <span className="h-8 w-8 rounded bg-muted" aria-hidden="true" />
+      )}
+      <span className="max-w-28 truncate">{provider.provider_name}</span>
+    </>
+  )
+  const className =
+    'inline-flex h-11 max-w-40 items-center gap-2 rounded-md border border-border bg-secondary px-2 text-xs text-secondary-foreground no-underline transition hover:border-primary/40'
 
-  if (!items.length) return null
+  if (href) {
+    return (
+      <a href={href} className={className} title={provider.provider_name}>
+        {content}
+      </a>
+    )
+  }
+
+  return (
+    <span className={className} title={provider.provider_name}>
+      {content}
+    </span>
+  )
+}
+
+export function GallerySection({
+  images,
+  stillPath,
+}: {
+  images?: TmdbImages
+  stillPath?: string | null
+}) {
+  const gallery = galleryImages(images, stillPath)
+  if (!gallery.length) return null
 
   return (
     <section className="py-8">
-      <h2 className="mb-4 text-xl font-semibold">Similar Titles</h2>
-      <MediaGrid items={items} />
+      <h2 className="mb-4 text-xl font-semibold">Gallery</h2>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {gallery.map((image, index) => {
+          const thumb = tmdbImage(image.file_path, image.kind === 'poster' ? 'w342' : 'w500')
+          const full = tmdbImage(image.file_path, 'w1280')
+          if (!thumb || !full) return null
+
+          return (
+            <div key={`${image.kind}-${image.file_path}`}>
+              <a
+                href={`#gallery-${index}`}
+                className="group block overflow-hidden rounded-md border border-border bg-card no-underline hover:border-primary/40"
+              >
+                <img
+                  src={thumb}
+                  alt={image.alt}
+                  className="aspect-video w-full object-cover transition group-hover:scale-[1.02]"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span className="block truncate px-2 py-1.5 text-xs text-muted-foreground">
+                  {image.label}
+                </span>
+              </a>
+              <div
+                id={`gallery-${index}`}
+                className="fixed inset-0 z-50 hidden bg-background/95 p-4 target:grid target:place-items-center"
+              >
+                <a
+                  href="#gallery"
+                  className="absolute right-4 top-4 rounded-md border border-border bg-secondary px-3 py-1.5 text-sm text-secondary-foreground no-underline"
+                >
+                  Close
+                </a>
+                <img
+                  src={full}
+                  alt={image.alt}
+                  className="max-h-[86vh] max-w-full rounded-md object-contain"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </section>
   )
 }
 
-export function SimilarTv({ tv }: { tv: TmdbTvDetail }) {
-  const items =
-    tv.similar?.results
-      .map((item) => toMediaCard(item, 'tv'))
-      .filter(isMediaCardItem)
-      .slice(0, 12) ?? []
-
+export function RecommendationsSection({ items }: { items: MediaCardItem[] }) {
   if (!items.length) return null
 
   return (
     <section className="py-8">
-      <h2 className="mb-4 text-xl font-semibold">Similar Titles</h2>
+      <h2 className="mb-4 text-xl font-semibold">Recommended Titles</h2>
       <MediaGrid items={items} />
     </section>
   )

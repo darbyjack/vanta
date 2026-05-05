@@ -8,6 +8,7 @@ import { SearchTypeTabs } from '#/features/search/components/SearchTypeTabs'
 import { guardedPageHandlers } from '#/lib/bots/server-route'
 import { getSearchPageData } from '#/lib/tmdb/search.functions'
 import { searchParamsSchema } from '#/lib/tmdb/search'
+import { searchServerInput, searchUrlDefaults } from '#/lib/tmdb/search-url'
 
 export const Route = createFileRoute('/search')({
   server: {
@@ -15,10 +16,19 @@ export const Route = createFileRoute('/search')({
   },
   validateSearch: searchParamsSchema,
   search: {
-    middlewares: [stripSearchParams({ q: '', type: 'all', page: 1 })],
+    middlewares: [
+      stripSearchParams(searchUrlDefaults),
+    ],
   },
-  loaderDeps: ({ search: { q, type, page } }) => ({ q, type, page }),
-  loader: ({ deps }) => getSearchPageData({ data: deps }),
+  loaderDeps: ({ search: { q, type, page, year, sort, genre } }) => ({
+    q,
+    type,
+    page,
+    year,
+    sort,
+    genre,
+  }),
+  loader: ({ deps }) => getSearchPageData({ data: searchServerInput(deps) }),
   staleTime: 5 * 60 * 1000,
   head: ({ loaderData }) => {
     const query = loaderData?.params.q
@@ -54,14 +64,15 @@ function SearchPage() {
             </p>
           </div>
 
-          <SearchForm query={params.q} type={params.type} />
+          <SearchForm params={params} />
 
-          {params.q ? (
+          {params.q || params.year || params.genre || params.sort !== 'popularity' ? (
             <div className="space-y-3">
-              <SearchTypeTabs query={params.q} active={params.type} />
+              <SearchTypeTabs params={params} />
               <p className="text-sm text-muted-foreground">
                 {totalResults.toLocaleString('en-US')} result
-                {totalResults === 1 ? '' : 's'} for "{params.q}"
+                {totalResults === 1 ? '' : 's'}
+                {params.q ? ` for "${params.q}"` : ''}
               </p>
             </div>
           ) : null}
@@ -70,9 +81,7 @@ function SearchPage() {
             <>
               <MediaGrid items={items} />
               <SearchPagination
-                query={params.q}
-                type={params.type}
-                page={params.page}
+                params={params}
                 totalPages={totalPages}
               />
             </>

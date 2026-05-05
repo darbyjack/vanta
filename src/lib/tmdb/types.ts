@@ -45,6 +45,7 @@ export interface TmdbEpisode {
   vote_count?: number
   crew?: TmdbCredit[]
   guest_stars?: TmdbCredit[]
+  images?: TmdbImages
 }
 
 export interface TmdbEpisodeCredits {
@@ -73,6 +74,22 @@ export interface TmdbProvider {
   logo_path: string | null
 }
 
+export interface TmdbImageAsset {
+  aspect_ratio: number
+  file_path: string
+  height: number
+  width: number
+  vote_average: number
+  vote_count: number
+  iso_639_1?: string | null
+}
+
+export interface TmdbImages {
+  backdrops?: TmdbImageAsset[]
+  posters?: TmdbImageAsset[]
+  stills?: TmdbImageAsset[]
+}
+
 export interface TmdbWatchProviders {
   results?: Record<
     string,
@@ -93,6 +110,7 @@ export interface TmdbMovieSummary {
   release_date?: string
   vote_average: number
   vote_count: number
+  popularity?: number
   overview: string
   media_type?: 'movie'
 }
@@ -105,6 +123,7 @@ export interface TmdbTvSummary {
   first_air_date?: string
   vote_average: number
   vote_count: number
+  popularity?: number
   overview: string
   media_type?: 'tv'
 }
@@ -129,6 +148,8 @@ export interface TmdbMovieDetail extends TmdbMovieSummary {
   videos?: { results: TmdbVideo[] }
   'watch/providers'?: TmdbWatchProviders
   similar?: TmdbPage<TmdbMovieSummary>
+  recommendations?: TmdbPage<TmdbMovieSummary>
+  images?: TmdbImages
 }
 
 export interface TmdbTvDetail extends TmdbTvSummary {
@@ -145,6 +166,8 @@ export interface TmdbTvDetail extends TmdbTvSummary {
   videos?: { results: TmdbVideo[] }
   'watch/providers'?: TmdbWatchProviders
   similar?: TmdbPage<TmdbTvSummary>
+  recommendations?: TmdbPage<TmdbTvSummary>
+  images?: TmdbImages
 }
 
 export interface TmdbCombinedCredit {

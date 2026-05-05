@@ -10,7 +10,9 @@ export const getSearchPageData = createServerFn({ method: 'GET' })
     const results = await searchTmdb(data)
     applyCachePolicy('SEARCH', 'search')
     const items = results.results
-      .map((item) => toMediaCard(item, data.type === 'all' ? undefined : data.type))
+      .map((item) =>
+        toMediaCard(item, data.type === 'all' ? undefined : data.type),
+      )
       .filter(isMediaCardItem)
 
     return {

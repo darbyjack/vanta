@@ -7,9 +7,10 @@ import { Container } from '#/components/layout/Container'
 import {
   CastSection,
   CrewLine,
+  GallerySection,
   pickTrailer,
   ProvidersSection,
-  SimilarMovies,
+  RecommendationsSection,
   TrailerLink,
 } from '#/features/movie/components/DetailSections'
 import { guardedPageHandlers } from '#/lib/bots/server-route'
@@ -41,7 +42,7 @@ export const Route = createFileRoute('/movie/$slug')({
 })
 
 function MoviePage() {
-  const { movie } = Route.useLoaderData()
+  const { movie, recommendations } = Route.useLoaderData()
   const directors =
     movie.credits?.crew.filter((person) => person.job === 'Director') ?? []
   const writers =
@@ -90,7 +91,8 @@ function MoviePage() {
       <Container>
         <CastSection cast={movie.credits?.cast ?? []} />
         <ProvidersSection providers={movie['watch/providers']?.results?.US} />
-        <SimilarMovies movie={movie} />
+        <GallerySection images={movie.images} />
+        <RecommendationsSection items={recommendations} />
       </Container>
     </main>
   )

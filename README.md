@@ -22,8 +22,9 @@ It is built for server-rendered reference pages, clean URL-based navigation, SEO
 - Season and episode pages
 - Episode cast and crew
 - Person pages
-- Search with URL-based state
-- Streaming provider information
+- Search with URL-based state and server-side filters
+- Grouped streaming provider information
+- Entity image galleries
 - SEO metadata and canonical URLs
 - Cloudflare edge caching
 - Bot and crawler controls for expensive TMDB-backed routes
@@ -70,6 +71,24 @@ pnpm deploy
 - `/sitemap.xml`
 
 Entity IDs are the source of truth. Slugs are cosmetic and should redirect to the canonical slug when needed.
+
+## Providers
+
+Movie and TV pages render US streaming availability from TMDB watch provider data. Providers are grouped as Stream, Rent, and Buy, empty groups are omitted, and provider logos link to TMDB availability when TMDB returns a provider link.
+
+## Galleries
+
+Movie, TV, and episode pages can render compact image galleries from TMDB image data. Gallery images are loaded with the page data on the server, shown in a small lazy-loaded grid, and opened with a lightweight in-page lightbox. Empty galleries are omitted.
+
+## Search Filters
+
+Search is driven entirely by URL params:
+
+```txt
+/search?q=batman&type=movie&year=2008&sort=rating
+```
+
+Supported params are `q`, `type`, `page`, `year`, `sort`, and `genre`. Unfiltered text search uses TMDB search endpoints. Filtered movie and TV searches use TMDB discover endpoints server-side; the page still renders without client-side TMDB requests.
 
 ## Caching
 

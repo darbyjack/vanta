@@ -70,6 +70,10 @@ Missing outlets can make nested URLs match while still rendering only the parent
 - Use focused `loaderDeps` so loader caching keys only include meaningful search state.
 - Strip default values such as empty query, default type, and first page when appropriate.
 - Search result pages should avoid indexing low-value query URLs.
+- Supported search params are `q`, `type`, `page`, `year`, `sort`, and `genre`.
+- Use TMDB search endpoints for unfiltered text search.
+- Use TMDB discover endpoints for server-side movie and TV filters.
+- Search forms should submit normally and must not require client JavaScript for filter behavior.
 
 ## Caching Strategy
 
@@ -93,6 +97,10 @@ Do not set cookies from public reference routes. Preserve asset handling so matc
 - Avoid fetching large nested TV data eagerly; season and episode pages should fetch details only for the requested route.
 - Episode credits expose `guest_stars` separately from `cast`; keep them separate in normalized types and route UI.
 - Episode pages should prioritize episode-specific guest stars before main cast and crew.
+- Provider UI should use US watch provider data for now and group non-empty providers into Stream (`flatrate`), Rent, and Buy rows.
+- Provider logos may link to TMDB availability when the provider response includes a link.
+- Gallery UI should use server-loaded TMDB image data, lazy-load grid thumbnails, open a lightweight in-page lightbox, and omit the section when no images exist.
+- Recommendation rails should merge `similar` and `recommendations`, dedupe by TMDB ID, and keep the final list compact.
 
 ## Performance Rules
 
